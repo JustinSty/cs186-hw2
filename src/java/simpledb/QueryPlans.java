@@ -35,15 +35,25 @@ public class QueryPlans {
 	}
 
 	// SELECT ​​* FROM T1, T2
-	// WHERE T1.column0 < (SELECT COUNT(*​​) FROM T3)
-	// AND T2.column0 = (SELECT AVG(column0) FROM T3)
+	// WHERE T1.column0 < (SELECT COUNT(*​​) FROM T3)     f1
+	// AND T2.column0 = (SELECT AVG(column0) FROM T3)   f2
 	// AND T1.column1 >= T2. column1
 	// ORDER BY T1.column0 DESC;
 	public Operator queryFour(DbIterator t1, DbIterator t2, DbIterator t3) throws TransactionAbortedException, DbException {
 		// IMPLEMENT ME
 		Aggregate c3 = new Aggregate(t3, 0, 0, Aggregator.Op.COUNT);
-		IntField i1 = new IntField(c3.iterator().)
-		return null;
+		IntField i1 = new IntField((int)c3.next().getField(0));
+		Predicate filterpre1 = new Predicate(0, Predicate.Op.LESS_THAN, i1);
+		Filter f1 = new Filter(filterpre1, t1);
+
+		Aggregate a3 = new Aggregate(t3, 0, 0, Aggregator.Op.AVG);
+		IntField i2 = new IntField((int)a3.next().getField(0));
+		Predicate filterpre2 = new Predicate(0, Predicate.Op.EQUALS, i2);
+		Filter f2 = new Filter(filterpre2, t2);
+
+		JoinPredicate joinpred = new JoinPredicate(1, Predicate.Op.GREATER_THAN_OR_EQ, 1);
+		Join j = new Join(joinpred, f1, f2);
+		return j;
 	}
 
 
