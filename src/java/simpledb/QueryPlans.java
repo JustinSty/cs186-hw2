@@ -43,12 +43,16 @@ public class QueryPlans {
 		// IMPLEMENT ME
 		DbIterator t4 = t3;
 		Aggregate c3 = new Aggregate(t3, 0, -1, Aggregator.Op.COUNT);
+		c3.open();
 		IntField i1 = (IntField)c3.next().getField(0);
+		c3.close();
 		Predicate filterpre1 = new Predicate(0, Predicate.Op.LESS_THAN, i1);
 		Filter f1 = new Filter(filterpre1, t1);
 
 		Aggregate a3 = new Aggregate(t4, 0, -1, Aggregator.Op.AVG);
+		a3.open();
 		IntField i2 = (IntField)a3.next().getField(0);
+		a3.close();
 		Predicate filterpre2 = new Predicate(0, Predicate.Op.EQUALS, i2);
 		Filter f2 = new Filter(filterpre2, t2);
 

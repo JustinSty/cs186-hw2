@@ -107,7 +107,7 @@ public class ChunkNestedLoopJoin extends Operator {
         // IMPLEMENT ME
         Chunk cur_chunk = fetchNextChunk();
         Tuple[] chunk_tuples = cur_chunk.getChunkTuples();
-        while (chunk_tuples.length != 0) {
+        while (chunk_tuples != null) {
             while (child2.hasNext()) {
                 Tuple t2 = child2.next();
 
