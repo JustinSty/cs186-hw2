@@ -13,7 +13,7 @@ public class ChunkNestedLoopJoin extends Operator {
     private TupleDesc comboTD;
     private int chunkSize;
     private Chunk currentChunk;
-    private Tuple[] chunk_tuples;
+    //private Tuple[] chunk_tuples;
 
     /**
      * Constructor. Accepts to children to join and the predicate to join them
@@ -34,7 +34,7 @@ public class ChunkNestedLoopJoin extends Operator {
         this.child2 = child2;
         this.chunkSize = chunkSize;
         comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
-        currentChunk = fetchNextChunk();
+        currentChunk = new Chunk(chunkSize);
     }
 
     public JoinPredicate getJoinPredicate() {
@@ -85,13 +85,6 @@ public class ChunkNestedLoopJoin extends Operator {
     protected Chunk fetchNextChunk() throws DbException, TransactionAbortedException {
         // IMPLEMENT ME
         currentChunk.loadChunk(child1);
-        child1.open();
-        for (int i = 0; i < chunkSize; i++) {
-            if (child1.hasNext()) {
-                child1.next();
-            }
-        }
-        child1.close();
         return currentChunk;
     }
 
@@ -113,12 +106,11 @@ public class ChunkNestedLoopJoin extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // IMPLEMENT ME
-        this.open();
-        Tuple[] chunk_tuples = currentChunk.getChunkTuples();
+        Chunk cur_chunk = fetchNextChunk();
+        Tuple[] chunk_tuples = cur_chunk.getChunkTuples();
         while (chunk_tuples != null) {
             while (child2.hasNext()) {
                 Tuple t2 = child2.next();
-
                 for (int j = 0; j < chunk_tuples.length; j++){
                     Tuple t1 = chunk_tuples[j];
 
@@ -137,10 +129,10 @@ public class ChunkNestedLoopJoin extends Operator {
                     return t;
                 }
             }
-            currentChunk = fetchNextChunk();
-            chunk_tuples = currentChunk.getChunkTuples();
+            cur_chunk = fetchNextChunk();
+            chunk_tuples = cur_chunk.getChunkTuples();
+            child2.rewind();
         }
-        this.close();
         return null;
     }
 
