@@ -84,6 +84,13 @@ public class ChunkNestedLoopJoin extends Operator {
     protected Chunk fetchNextChunk() throws DbException, TransactionAbortedException {
         // IMPLEMENT ME
         currentChunk.loadChunk(child1);
+        child1.open();
+        for (int i = 0; i < chunkSize; i++) {
+            if (child1.hasNext()) {
+                child1.next();
+            }
+        }
+        child1.close();
         return currentChunk;
     }
 
@@ -107,7 +114,6 @@ public class ChunkNestedLoopJoin extends Operator {
         // IMPLEMENT ME
         this.open();
         Chunk cur_chunk = fetchNextChunk();
-        this.close();
         Tuple[] chunk_tuples = cur_chunk.getChunkTuples();
         while (chunk_tuples != null) {
             while (child2.hasNext()) {
@@ -131,11 +137,10 @@ public class ChunkNestedLoopJoin extends Operator {
                     return t;
                 }
             }
-            child2.rewind();
-            this.open();
             cur_chunk = fetchNextChunk();
-            this.close();
+            chunk_tuples = cur_chunk.getChunkTuples();
         }
+        this.close();
         return null;
     }
 
