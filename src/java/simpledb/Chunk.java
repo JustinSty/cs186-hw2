@@ -28,6 +28,7 @@ public class Chunk {
      */
     public void loadChunk(DbIterator iterator) throws DbException, TransactionAbortedException {
         // IMPLEMENT ME
+        iterator.open();
         if (!iterator.hasNext()) {
             tupleArray = null;
         } else {
@@ -40,6 +41,7 @@ public class Chunk {
                 i++;
             }
         }
+        iterator.close();
     }
 
     /**
