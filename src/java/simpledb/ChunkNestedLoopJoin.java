@@ -108,11 +108,17 @@ public class ChunkNestedLoopJoin extends Operator {
         // IMPLEMENT ME
         Chunk cur_chunk = fetchNextChunk();
         Tuple[] chunk_tuples = cur_chunk.getChunkTuples();
+        //System.out.println(chunk_tuples);
         while (chunk_tuples != null) {
             while (child2.hasNext()) {
                 Tuple t2 = child2.next();
+                System.out.print("t2: ");
+                System.out.println(t2);
+                //System.out.println(chunk_tuples.length);
                 for (int j = 0; j < chunk_tuples.length; j++){
                     Tuple t1 = chunk_tuples[j];
+                    System.out.print("t1: ");
+                    System.out.println(t1);
 
                     if (!pred.filter(t1, t2))
                         continue;
@@ -126,6 +132,10 @@ public class ChunkNestedLoopJoin extends Operator {
                         t.setField(i, t1.getField(i));
                     for (int i = 0; i < td2n; i++)
                         t.setField(td1n + i, t2.getField(i));
+
+                    System.out.print("t: ");
+                    System.out.println(t);
+                    System.out.println();
                     return t;
                 }
             }
