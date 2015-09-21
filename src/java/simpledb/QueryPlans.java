@@ -41,13 +41,14 @@ public class QueryPlans {
 	// ORDER BY T1.column0 DESC;
 	public Operator queryFour(DbIterator t1, DbIterator t2, DbIterator t3) throws TransactionAbortedException, DbException {
 		// IMPLEMENT ME
-		Aggregate c3 = new Aggregate(t3, 0, 0, Aggregator.Op.COUNT);
-		IntField i1 = new IntField((int)c3.next().getField(0));
+		DbIterator t4 = t3;
+		Aggregate c3 = new Aggregate(t3, 0, -1, Aggregator.Op.COUNT);
+		IntField i1 = (IntField)c3.next().getField(0);
 		Predicate filterpre1 = new Predicate(0, Predicate.Op.LESS_THAN, i1);
 		Filter f1 = new Filter(filterpre1, t1);
 
-		Aggregate a3 = new Aggregate(t3, 0, 0, Aggregator.Op.AVG);
-		IntField i2 = new IntField((int)a3.next().getField(0));
+		Aggregate a3 = new Aggregate(t4, 0, -1, Aggregator.Op.AVG);
+		IntField i2 = (IntField)a3.next().getField(0);
 		Predicate filterpre2 = new Predicate(0, Predicate.Op.EQUALS, i2);
 		Filter f2 = new Filter(filterpre2, t2);
 
