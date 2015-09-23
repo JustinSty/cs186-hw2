@@ -16,6 +16,8 @@ public class SymmetricHashJoin extends Operator {
     private int empty;
     private TupleIterator ctuple_iterator;
     private int page_tuple_left;
+    private String current_child;
+
      /**
      * Constructor. Accepts children to join and the predicate to join them on.
      * 
@@ -33,6 +35,7 @@ public class SymmetricHashJoin extends Operator {
         comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
         this.page_tuple_left = 2;
         empty = 1;
+        current_child = "child1";
     }
 
     public TupleDesc getTupleDesc() {
@@ -86,7 +89,7 @@ public class SymmetricHashJoin extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // IMPLEMENT ME
         while (page_tuple_left != 0) {
-            System.out.println(page_tuple_left);
+            System.out.println(current_child);
             if (child1.hasNext()) {
                 Tuple t1 = child1.next();
                 System.out.println(t1);
@@ -104,20 +107,27 @@ public class SymmetricHashJoin extends Operator {
                 System.out.print("key, tlist: ");
                 System.out.print(key);
                 System.out.println(tlist);
-
+                System.out.println(leftMap);
                 //need a continue method here
 
                 if (rightMap.containsKey(key)){
                     //if there's a hash code match
-                    if (empty == 1) {
+                    System.out.println("contains");
+                    System.out.println(empty);
 
+                    if (empty == 1) {
                         ctuple_iterator = new TupleIterator(child2.getTupleDesc(), rightMap.get(key));
                         empty = 0;
-
                     }
 
-                    if (ctuple_iterator.hasNext()) {
+                    System.out.println("aaaaaaaaaaaaaaaaaaa");
+                    System.out.println(ctuple_iterator.hasNext());
+                    System.out.println("bbbbbbbbbbbbbbbbbbb");
+
+                    while (ctuple_iterator.hasNext()) {
                         Tuple t2 = ctuple_iterator.next();
+                        System.out.print("t2: ");
+                        System.out.println(t2);
                         if (!pred.filter(t1, t2))
                             continue;
 
@@ -136,6 +146,7 @@ public class SymmetricHashJoin extends Operator {
 
                         return t;
                     }
+                    empty = 1;
                     
                 }
             }
@@ -170,8 +181,13 @@ public class SymmetricHashJoin extends Operator {
 
         comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
 
+        empty = 1;
 
-
+        if (current_child == "child1") {
+            current_child = "child2";
+        } else {
+            current_child = "child1";
+        }
     }
 
     @Override
