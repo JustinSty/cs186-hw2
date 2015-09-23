@@ -104,9 +104,6 @@ public class SymmetricHashJoin extends Operator {
                 }
                 tlist.add(t1);
                 leftMap.put(key, tlist);
-                System.out.print("key, tlist: ");
-                System.out.print(key);
-                System.out.println(tlist);
                 System.out.println(leftMap);
                 //need a continue method here
 
@@ -121,7 +118,8 @@ public class SymmetricHashJoin extends Operator {
                     }
 
                     System.out.println("aaaaaaaaaaaaaaaaaaa");
-                    System.out.println(ctuple_iterator.hasNext());
+                    System.out.println(rightMap.get(key));
+                    System.out.println(ctuple_iterator.hasNext());  //bug here
                     System.out.println("bbbbbbbbbbbbbbbbbbb");
 
                     while (ctuple_iterator.hasNext()) {
@@ -147,9 +145,11 @@ public class SymmetricHashJoin extends Operator {
                         return t;
                     }
                     empty = 1;
-                    
+
                 }
+                System.out.println("match out");
             }
+            System.out.println("next out");
             page_tuple_left--;
             if (page_tuple_left == 0) {
                 page_tuple_left = 2;
