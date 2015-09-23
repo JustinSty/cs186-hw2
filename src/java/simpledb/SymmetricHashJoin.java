@@ -13,6 +13,9 @@ public class SymmetricHashJoin extends Operator {
     private HashMap<Object, ArrayList<Tuple>> leftMap = new HashMap<Object, ArrayList<Tuple>>();
     private HashMap<Object, ArrayList<Tuple>> rightMap = new HashMap<Object, ArrayList<Tuple>>();
 
+    private int empty;
+    private TupleIterator ctuple_iterator;
+    private int page_tuple_left;
      /**
      * Constructor. Accepts children to join and the predicate to join them on.
      * 
@@ -28,6 +31,8 @@ public class SymmetricHashJoin extends Operator {
         this.child1 = child1;
         this.child2 = child2;
         comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
+        this.page_tuple_left = 2;
+        empty = 1;
     }
 
     public TupleDesc getTupleDesc() {
@@ -80,7 +85,58 @@ public class SymmetricHashJoin extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // IMPLEMENT ME
-        
+        while (page_tuple_left != 0) {
+            if (child1.hasNext()) {
+                Tuple t1 = child1.next();
+                Object key = t1.getField(0).hashCode();
+
+                ArrayList<Tuple> tlist;
+
+                if (leftMap.containsKey(key)) {
+                    tlist = leftMap.get(key);
+                } else {
+                    tlist = new ArrayList<Tuple>();
+                }
+                tlist.add(t1);
+                leftMap.put(key, tlist);
+
+                //need a continue method here
+
+                if (rightMap.containsKey(key)){
+                    //if there's a hash code match
+                    if (empty == 1) {
+                        ctuple_iterator = new TupleIterator(child2.getTupleDesc(), rightMap.get(key));
+                    }
+
+                    if (ctuple_iterator.hasNext()) {
+                        Tuple t2 = ctuple_iterator.next();
+                        if (!pred.filter(t1, t2))
+                            continue;
+
+                        int td1n = t1.getTupleDesc().numFields();
+                        int td2n = t2.getTupleDesc().numFields();
+
+                        // set fields in combined tuple
+                        Tuple t = new Tuple(comboTD);
+                        for (int i = 0; i < td1n; i++)
+                            t.setField(i, t1.getField(i));
+                        for (int i = 0; i < td2n; i++)
+                            t.setField(td1n + i, t2.getField(i));
+                        
+                        System.out.print("t: ");
+                        System.out.print(t);
+
+                        return t;
+                    }
+                    
+                }
+            }
+            page_tuple_left--;
+        }
+        page_tuple_left = 2;
+        switchRelations();
+
+
         return null;
     }
 
@@ -88,7 +144,22 @@ public class SymmetricHashJoin extends Operator {
      * Switches the inner and outer relation.
      */
     private void switchRelations() throws TransactionAbortedException, DbException {
-        // IMPLEMENT ME
+        HashMap<Object, ArrayList<Tuple>> midMap;
+        midMap = leftMap;
+        leftMap = rightMap;
+        rightMap = midMap;
+
+        DbIterator child0;
+        child0 = child1;
+        child1 = child2;
+        child2 = child0;
+
+        pred = new JoinPredicate(pred.getField2(), pred.getOperator(), pred.getField1());
+
+        comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
+
+
+
     }
 
     @Override
