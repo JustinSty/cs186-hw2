@@ -40,6 +40,9 @@ public class SymmetricHashJoin extends Operator {
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // IMPLEMENT ME
+        child1.open();
+        child2.open();
+        super.open();
     }
 
     /**
@@ -47,6 +50,9 @@ public class SymmetricHashJoin extends Operator {
      */
     public void close() {
         // IMPLEMENT ME
+        super.close();
+        child2.close();
+        child1.close();
     }
 
     /**
@@ -74,6 +80,7 @@ public class SymmetricHashJoin extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // IMPLEMENT ME
+        
         return null;
     }
 
