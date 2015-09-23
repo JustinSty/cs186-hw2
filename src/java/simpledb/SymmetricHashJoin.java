@@ -92,6 +92,7 @@ public class SymmetricHashJoin extends Operator {
             System.out.println(current_child);
             if (child1.hasNext()) {
                 Tuple t1 = child1.next();
+                System.out.print("t1: ");
                 System.out.println(t1);
                 Object key = t1.getField(0).hashCode();
 
@@ -104,19 +105,28 @@ public class SymmetricHashJoin extends Operator {
                 }
                 tlist.add(t1);
                 leftMap.put(key, tlist);
+                System.out.print("key: ");
+                System.out.println(key);
+                System.out.print("leftMap: ");
                 System.out.println(leftMap);
                 //need a continue method here
 
+
                 if (rightMap.containsKey(key)){
                     //if there's a hash code match
+                    System.out.print("rightMap: ");
+                    System.out.println(rightMap);
                     System.out.println("contains");
                     System.out.println(empty);
 
                     if (empty == 1) {
+
                         ctuple_iterator = new TupleIterator(child2.getTupleDesc(), rightMap.get(key));
                         empty = 0;
                     }
 
+                    System.out.print("ctuple_iterator is null?: ");
+                    System.out.println(ctuple_iterator == null);
                     System.out.println("aaaaaaaaaaaaaaaaaaa");
                     System.out.println(rightMap.get(key));
                     System.out.println(ctuple_iterator.hasNext());  //bug here
@@ -147,9 +157,7 @@ public class SymmetricHashJoin extends Operator {
                     empty = 1;
 
                 }
-                System.out.println("match out");
             }
-            System.out.println("next out");
             page_tuple_left--;
             if (page_tuple_left == 0) {
                 page_tuple_left = 2;

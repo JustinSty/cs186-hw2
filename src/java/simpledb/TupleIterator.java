@@ -39,6 +39,8 @@ public class TupleIterator implements DbIterator {
 
     public boolean hasNext() {
         System.out.println("checking");
+        System.out.print("i is null?: ");
+        System.out.println(i == null);
         System.out.println(i.hasNext());  //didn't print this neither
         return i.hasNext();
     }
