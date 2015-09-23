@@ -86,8 +86,10 @@ public class SymmetricHashJoin extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // IMPLEMENT ME
         while (page_tuple_left != 0) {
+            System.out.println(page_tuple_left);
             if (child1.hasNext()) {
                 Tuple t1 = child1.next();
+                System.out.println(t1);
                 Object key = t1.getField(0).hashCode();
 
                 ArrayList<Tuple> tlist;
@@ -99,13 +101,19 @@ public class SymmetricHashJoin extends Operator {
                 }
                 tlist.add(t1);
                 leftMap.put(key, tlist);
+                System.out.print("key, tlist: ");
+                System.out.print(key);
+                System.out.println(tlist);
 
                 //need a continue method here
 
                 if (rightMap.containsKey(key)){
                     //if there's a hash code match
                     if (empty == 1) {
+
                         ctuple_iterator = new TupleIterator(child2.getTupleDesc(), rightMap.get(key));
+                        empty = 0;
+
                     }
 
                     if (ctuple_iterator.hasNext()) {
@@ -122,7 +130,7 @@ public class SymmetricHashJoin extends Operator {
                             t.setField(i, t1.getField(i));
                         for (int i = 0; i < td2n; i++)
                             t.setField(td1n + i, t2.getField(i));
-                        
+
                         System.out.print("t: ");
                         System.out.print(t);
 
@@ -132,9 +140,13 @@ public class SymmetricHashJoin extends Operator {
                 }
             }
             page_tuple_left--;
+            if (page_tuple_left == 0) {
+                page_tuple_left = 2;
+                switchRelations();
+                System.out.println("switch");
+            }
         }
-        page_tuple_left = 2;
-        switchRelations();
+
 
 
         return null;
