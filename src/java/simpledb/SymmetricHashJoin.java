@@ -16,8 +16,10 @@ public class SymmetricHashJoin extends Operator {
     private int empty;
     private TupleIterator ctuple_iterator;
     private int page_tuple_left, pre_page_tuple_left;
-    private String current_child;
+    private Boolean current_child;
     private ArrayList<Tuple> tlist;
+    private int first_run;
+    private Tuple t0;
 
      /**
      * Constructor. Accepts children to join and the predicate to join them on.
@@ -36,7 +38,8 @@ public class SymmetricHashJoin extends Operator {
         comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
         this.page_tuple_left = 2;
         empty = 1;
-        current_child = "child1";
+        current_child = true;
+        first_run = 1;
     }
 
     public TupleDesc getTupleDesc() {
@@ -89,6 +92,21 @@ public class SymmetricHashJoin extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // IMPLEMENT ME
+        if (first_run == 1) {
+            first_run = 0;
+            System.out.println("first_run");
+            System.out.println("chid1: ");
+            while (child1.hasNext()) {
+                System.out.println(child1.next());
+            }
+            System.out.println("child2: ");
+            while (child2.hasNext()) {
+                System.out.println(child2.next());
+            }
+            child1.rewind();
+            child2.rewind();
+        }
+
         while (page_tuple_left != 0) {
             System.out.println(current_child);
             if (child1.hasNext()) {
@@ -128,6 +146,9 @@ public class SymmetricHashJoin extends Operator {
                         if (!pred.filter(t1, t2))
                             continue;
 
+                        if (!pred.filter(t1, t2))
+                            continue;
+
                         int td1n = t1.getTupleDesc().numFields();
                         int td2n = t2.getTupleDesc().numFields();
 
@@ -140,6 +161,9 @@ public class SymmetricHashJoin extends Operator {
 
                         System.out.print("t: ");
                         System.out.println(t);
+                        page_tuple_left--;
+
+
 
                         return t;
 
@@ -150,10 +174,12 @@ public class SymmetricHashJoin extends Operator {
             }
             page_tuple_left--;
 
-            if (page_tuple_left == 0 && (child1.hasNext() || child2.hasNext())) {
-                page_tuple_left = 2;
-                switchRelations();
-                System.out.println("switch");
+            if (page_tuple_left == 0) {
+                if (child1.hasNext() || child2.hasNext()) {
+                    page_tuple_left = 2;
+                    switchRelations();
+                    System.out.println("switch");
+                }
             }
         }
 
@@ -182,11 +208,7 @@ public class SymmetricHashJoin extends Operator {
 
         empty = 1;
 
-        if (current_child == "child1") {
-            current_child = "child2";
-        } else {
-            current_child = "child1";
-        }
+        current_child = !current_child;
     }
 
     @Override
