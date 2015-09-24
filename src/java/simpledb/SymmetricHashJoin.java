@@ -15,8 +15,9 @@ public class SymmetricHashJoin extends Operator {
 
     private int empty;
     private TupleIterator ctuple_iterator;
-    private int page_tuple_left;
+    private int page_tuple_left, pre_page_tuple_left;
     private String current_child;
+    private ArrayList<Tuple> tlist;
 
      /**
      * Constructor. Accepts children to join and the predicate to join them on.
@@ -96,8 +97,6 @@ public class SymmetricHashJoin extends Operator {
                 System.out.println(t1);
                 Object key = t1.getField(0).hashCode();
 
-                ArrayList<Tuple> tlist;
-
                 if (leftMap.containsKey(key)) {
                     tlist = leftMap.get(key);
                 } else {
@@ -105,32 +104,22 @@ public class SymmetricHashJoin extends Operator {
                 }
                 tlist.add(t1);
                 leftMap.put(key, tlist);
-                System.out.print("key: ");
-                System.out.println(key);
-                System.out.print("leftMap: ");
-                System.out.println(leftMap);
-                //need a continue method here
+
 
 
                 if (rightMap.containsKey(key)){
                     //if there's a hash code match
-                    System.out.print("rightMap: ");
-                    System.out.println(rightMap);
-                    System.out.println("contains");
-                    System.out.println(empty);
+
 
                     if (empty == 1) {
 
                         ctuple_iterator = new TupleIterator(child2.getTupleDesc(), rightMap.get(key));
+                        ctuple_iterator.rewind();
                         empty = 0;
                     }
 
-                    System.out.print("ctuple_iterator is null?: ");
-                    System.out.println(ctuple_iterator == null);
-                    System.out.println("aaaaaaaaaaaaaaaaaaa");
+                    System.out.print("match: ");
                     System.out.println(rightMap.get(key));
-                    System.out.println(ctuple_iterator.hasNext());  //bug here
-                    System.out.println("bbbbbbbbbbbbbbbbbbb");
 
                     while (ctuple_iterator.hasNext()) {
                         Tuple t2 = ctuple_iterator.next();
@@ -150,22 +139,23 @@ public class SymmetricHashJoin extends Operator {
                             t.setField(td1n + i, t2.getField(i));
 
                         System.out.print("t: ");
-                        System.out.print(t);
+                        System.out.println(t);
 
                         return t;
+
                     }
                     empty = 1;
 
                 }
             }
             page_tuple_left--;
-            if (page_tuple_left == 0) {
+
+            if (page_tuple_left == 0 && (child1.hasNext() || child2.hasNext())) {
                 page_tuple_left = 2;
                 switchRelations();
                 System.out.println("switch");
             }
         }
-
 
 
         return null;
@@ -188,6 +178,7 @@ public class SymmetricHashJoin extends Operator {
         pred = new JoinPredicate(pred.getField2(), pred.getOperator(), pred.getField1());
 
         comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
+
 
         empty = 1;
 
