@@ -14,12 +14,15 @@ public class SymmetricHashJoin extends Operator {
     private HashMap<Object, ArrayList<Tuple>> rightMap = new HashMap<Object, ArrayList<Tuple>>();
 
     private int empty;
-    private TupleIterator ctuple_iterator;
-    private int page_tuple_left, pre_page_tuple_left;
-    private Boolean current_child;
+    private Iterator<Tuple> ctuple_iterator = null;
+    private int page_tuple_left;
+    private Boolean current_child1;
     private ArrayList<Tuple> tlist;
     private int first_run;
     private Tuple t0;
+    private Tuple t1 = null;
+    private Tuple t2 = null;
+    private int page_size = 10;
 
      /**
      * Constructor. Accepts children to join and the predicate to join them on.
@@ -36,9 +39,8 @@ public class SymmetricHashJoin extends Operator {
         this.child1 = child1;
         this.child2 = child2;
         comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
-        this.page_tuple_left = 2;
-        empty = 1;
-        current_child = true;
+        this.page_tuple_left = page_size;
+        current_child1 = true;
         first_run = 1;
     }
 
@@ -90,31 +92,45 @@ public class SymmetricHashJoin extends Operator {
      * For example, joining {1,2,3} on equality of the first column with {1,5,6}
      * will return {1,2,3,1,5,6}.
      */
+
+    protected Tuple fetchNextHelper() throws TransactionAbortedException, DbException {
+        t2 = ctuple_iterator.next();
+
+        int td1n = t1.getTupleDesc().numFields();
+        int td2n = t2.getTupleDesc().numFields();
+
+        // set fields in combined tuple
+        Tuple t = new Tuple(comboTD);
+        if (current_child1) {
+            for (int i = 0; i < td1n; i++)
+                t.setField(i, t1.getField(i));
+            for (int i = 0; i < td2n; i++)
+                t.setField(td1n + i, t2.getField(i));
+        } else {
+            for (int i = 0; i < td2n; i++)
+                t.setField(i, t2.getField(i));
+            for (int i = 0; i < td1n; i++)
+                t.setField(td2n + i, t1.getField(i));
+        }
+        return t;
+    }
+
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         // IMPLEMENT ME
-        if (first_run == 1) {
-            first_run = 0;
-            System.out.println("first_run");
-            System.out.println("chid1: ");
-            while (child1.hasNext()) {
-                System.out.println(child1.next());
+        if (ctuple_iterator != null) {
+
+            //let several runs return all matches of a pair of hash code
+            if (ctuple_iterator.hasNext()) {
+                return fetchNextHelper();
             }
-            System.out.println("child2: ");
-            while (child2.hasNext()) {
-                System.out.println(child2.next());
-            }
-            child1.rewind();
-            child2.rewind();
         }
 
-        while (page_tuple_left != 0) {
-            System.out.println(current_child);
-            if (child1.hasNext()) {
-                Tuple t1 = child1.next();
-                System.out.print("t1: ");
-                System.out.println(t1);
-                Object key = t1.getField(0).hashCode();
 
+        while (child1.hasNext() || child2.hasNext()) {
+            if (child1.hasNext()) {
+                page_tuple_left--;
+                t1 = child1.next();
+                Object key = t1.getField(0).hashCode();
                 if (leftMap.containsKey(key)) {
                     tlist = leftMap.get(key);
                 } else {
@@ -123,63 +139,17 @@ public class SymmetricHashJoin extends Operator {
                 tlist.add(t1);
                 leftMap.put(key, tlist);
 
-
-
                 if (rightMap.containsKey(key)){
-                    //if there's a hash code match
-
-
-                    if (empty == 1) {
-
-                        ctuple_iterator = new TupleIterator(child2.getTupleDesc(), rightMap.get(key));
-                        ctuple_iterator.rewind();
-                        empty = 0;
-                    }
-
-                    System.out.print("match: ");
-                    System.out.println(rightMap.get(key));
-
-                    while (ctuple_iterator.hasNext()) {
-                        Tuple t2 = ctuple_iterator.next();
-                        System.out.print("t2: ");
-                        System.out.println(t2);
-                        if (!pred.filter(t1, t2))
-                            continue;
-
-                        if (!pred.filter(t1, t2))
-                            continue;
-
-                        int td1n = t1.getTupleDesc().numFields();
-                        int td2n = t2.getTupleDesc().numFields();
-
-                        // set fields in combined tuple
-                        Tuple t = new Tuple(comboTD);
-                        for (int i = 0; i < td1n; i++)
-                            t.setField(i, t1.getField(i));
-                        for (int i = 0; i < td2n; i++)
-                            t.setField(td1n + i, t2.getField(i));
-
-                        System.out.print("t: ");
-                        System.out.println(t);
-                        page_tuple_left--;
-
-
-
-                        return t;
-
-                    }
-                    empty = 1;
-
+                    ArrayList<Tuple> tupleList = rightMap.get(key);
+                    ctuple_iterator = tupleList.iterator();
+                    return fetchNextHelper();
                 }
-            }
-            page_tuple_left--;
-
-            if (page_tuple_left == 0) {
-                if (child1.hasNext() || child2.hasNext()) {
-                    page_tuple_left = 2;
+                if (page_tuple_left < 1) {
                     switchRelations();
-                    System.out.println("switch");
                 }
+
+            } else {
+                switchRelations();
             }
         }
 
@@ -205,10 +175,9 @@ public class SymmetricHashJoin extends Operator {
 
         comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
 
+        page_tuple_left = page_size;
 
-        empty = 1;
-
-        current_child = !current_child;
+        current_child1 = !current_child1;
     }
 
     @Override
